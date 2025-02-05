@@ -232,7 +232,7 @@
                     ) || 0
                 const startDate = document.getElementById("startDate").value
 
-                if (principle <= 0 || periodCount <= 0 || !startDate) return
+                if (principle <= 0 || periodCount <= 0) return
 
                 // Calculate total interest (flat rate)
                 const totalInterest = principle * (monthlyInterestRate / 100)
@@ -252,6 +252,7 @@
                 document.getElementById("totalRepayment").value =
                     Math.round(totalRepayment)
 
+                if (!startDate) return
                 // Calculate and set due date
                 const startDateObj = new Date(startDate)
                 const dueDate = new Date(startDateObj)
