@@ -246,135 +246,6 @@
                     .addEventListener("input", calculateLoan)
             })
 
-            // function calculateLoan() {
-            //     const principle =
-            //         parseFloat(document.getElementById("principle").value) || 0
-            //     const monthlyInterestRate =
-            //         parseFloat(document.getElementById("interestRate").value) ||
-            //         0
-            //     const periodCount =
-            //         parseInt(document.getElementById("periodCount").value) || 0
-            //     const intervalPeriod =
-            //         document.getElementById("intervalPeriod").value
-            //     const processingFees =
-            //         parseFloat(
-            //             document.getElementById("processingFees").value
-            //         ) || 0
-            //     const startDate = document.getElementById("startDate").value
-
-            //     if (principle <= 0 || periodCount <= 0) return
-
-            //     // Calculate total interest (flat rate)
-            //     const totalInterest = principle * (monthlyInterestRate / 100)
-
-            //     // Calculate total amount to repay
-            //     const totalRepayment =
-            //         principle + totalInterest + processingFees
-
-            //     // Calculate value per installment
-            //     const valuePerInstallment = totalRepayment / periodCount
-
-            //     // Update form fields
-            //     document.getElementById("totalInterest").value =
-            //         Math.round(totalInterest)
-            //     document.getElementById("valuePerInstallment").value =
-            //         Math.round(valuePerInstallment)
-            //     document.getElementById("totalRepayment").value =
-            //         Math.round(totalRepayment)
-
-            //     if (!startDate) return
-            //     // Calculate and set due date
-            //     const startDateObj = new Date(startDate)
-            //     const dueDate = new Date(startDateObj)
-
-            //     switch (intervalPeriod) {
-            //         case "DAYS":
-            //             dueDate.setDate(dueDate.getDate() + periodCount - 1)
-            //             break
-            //         case "WEEKS":
-            //             dueDate.setDate(dueDate.getDate() + periodCount * 7 - 1)
-            //             break
-            //         case "MONTHS":
-            //             dueDate.setMonth(dueDate.getMonth() + periodCount)
-            //             dueDate.setDate(dueDate.getDate() - 1)
-            //             break
-            //     }
-
-            //     document.getElementById("dueDate").value = dueDate
-            //         .toISOString()
-            //         .split("T")[0]
-
-            //     // Generate repayment schedule
-            //     generateRepaymentSchedule(
-            //         principle,
-            //         totalInterest,
-            //         processingFees,
-            //         valuePerInstallment,
-            //         periodCount,
-            //         startDateObj,
-            //         intervalPeriod
-            //     )
-            // }
-
-            // function generateRepaymentSchedule(
-            //     principal,
-            //     totalInterest,
-            //     processingFees,
-            //     installment,
-            //     numberOfPayments,
-            //     startDate,
-            //     intervalPeriod
-            // ) {
-            //     const tbody = document
-            //         .getElementById("repaymentSchedule")
-            //         .getElementsByTagName("tbody")[0]
-            //     tbody.innerHTML = ""
-
-            //     let remainingPrincipal = principal + processingFees
-            //     const interestPerInstallment = totalInterest / numberOfPayments
-            //     const principalPerInstallment =
-            //         (principal + processingFees) / numberOfPayments
-
-            //     for (let i = 1; i <= numberOfPayments; i++) {
-            //         const paymentDate = new Date(startDate)
-            //         switch (intervalPeriod) {
-            //             case "DAYS":
-            //                 paymentDate.setDate(paymentDate.getDate() + (i - 1))
-            //                 break
-            //             case "WEEKS":
-            //                 paymentDate.setDate(
-            //                     paymentDate.getDate() + (i - 1) * 7
-            //                 )
-            //                 break
-            //             case "MONTHS":
-            //                 paymentDate.setMonth(
-            //                     paymentDate.getMonth() + (i - 1)
-            //                 )
-            //                 break
-            //         }
-
-            //         remainingPrincipal -= principalPerInstallment
-
-            //         const row = tbody.insertRow()
-            //         row.insertCell(0).textContent = i
-            //         row.insertCell(1).textContent =
-            //             paymentDate.toLocaleDateString()
-            //         row.insertCell(2).textContent =
-            //             Math.round(installment).toLocaleString() + " UGX"
-            //         row.insertCell(3).textContent =
-            //             Math.round(principalPerInstallment).toLocaleString() +
-            //             " UGX"
-            //         row.insertCell(4).textContent =
-            //             Math.round(interestPerInstallment).toLocaleString() +
-            //             " UGX"
-            //         row.insertCell(5).textContent =
-            //             Math.max(
-            //                 0,
-            //                 Math.round(remainingPrincipal)
-            //             ).toLocaleString() + " UGX"
-            //     }
-            // }
-
             function calculateLoan() {
                 const principle =
                     parseFloat(document.getElementById("principle").value) || 0
@@ -395,17 +266,23 @@
 
                 if (principle <= 0 || periodCount <= 0) return
 
-                let periodicRate
+                let periodicRate;
                 switch (intervalPeriod) {
                     case "DAYS":
-                        periodicRate = monthlyInterestRate / 100 / 30
-                        break
+                        periodicRate = isReducingBalance ? 
+                            monthlyInterestRate / 100 / 30 :
+                            (monthlyInterestRate / 100) * (periodCount / 30);
+                        break;
                     case "WEEKS":
-                        periodicRate = monthlyInterestRate / 100 / 4
-                        break
+                        periodicRate = isReducingBalance ?
+                            monthlyInterestRate / 100 / 4 :
+                            (monthlyInterestRate / 100) * (periodCount / 4);
+                        break;
                     case "MONTHS":
-                        periodicRate = monthlyInterestRate / 100
-                        break
+                        periodicRate = isReducingBalance ?
+                            monthlyInterestRate / 100 :
+                            (monthlyInterestRate / 100) * periodCount;
+                        break;
                 }
 
                 let installment, totalInterest
@@ -430,10 +307,9 @@
                     }
                 } else {
                     // Flat rate calculations
-                    totalInterest = principle * (monthlyInterestRate / 100)
-                    installment =
-                        (principle + totalInterest + processingFees) /
-                        periodCount
+                    totalInterest = principle * periodicRate;
+                    const totalAmount = principle + totalInterest + processingFees;
+                    installment = totalAmount / periodCount;
                 }
 
                 // Update form fields
@@ -495,37 +371,16 @@
                 tbody.innerHTML = ""
 
                 let remainingPrincipal = principal + processingFees
-
-                if (interestMethod === "FLAT") {
-                    // // Calculate total interest for flat rate
-                    // const totalInterest =
-                    //     principal * periodicRate * numberOfPayments
-                    // // Calculate total amount to be repaid
-                    // const totalAmount =
-                    //     principal + totalInterest + processingFees
-                    // // Calculate installment amount
-                    // installment = totalAmount / numberOfPayments
-
-                    // Calculate total interest (flat rate)
-                    const totalInterest = principle * (periodicRate / 100)
-
-                    // Calculate total amount to repay
-                    const totalRepayment =
-                        principle + totalInterest + processingFees
-
-                    // Calculate value per installment
-                    const installment = totalRepayment / numberOfPayments
-                }
+                const totalInterest = interestMethod === "FLAT" ? principal * periodicRate : 0;
+                const flatRateInterestPerPeriod = interestMethod === "FLAT" ? totalInterest / numberOfPayments : 0;
 
                 for (let i = 1; i <= numberOfPayments; i++) {
                     let interestPayment
                     let principalPayment
 
                     if (interestMethod === "FLAT") {
-                        // Flat rate interest calculation
-                        interestPayment =
-                            (principal * periodicRate) / numberOfPayments
-                        principalPayment = installment - interestPayment
+                        interestPayment = flatRateInterestPerPeriod;
+                        principalPayment = installment - interestPayment;
                     } else {
                         // Reducing balance interest calculation
                         interestPayment = remainingPrincipal * periodicRate
